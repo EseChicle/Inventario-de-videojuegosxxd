@@ -85,4 +85,26 @@ class Inventario(tk.TK):
         self.label_total = ttk.Label(self, text="Valor total del inventario: $0.00", anchor="w")
         self.label_total.pack(fill="x", padx=10, pady=(0, 10))
 
+        #validacion formulario#
+    def _validar_formulario(self):
+        nombre = self.entry_nombre.get().strip()
+        cantidad = self.entry_cantidad.get().strip()
+        precio = self.entry_precio.get().strip()
 
+        if not nombre:
+            messagebox.showwarning("Validación", "El título es obligatorio.")
+            return None
+
+        try:
+            cantidad = int(cantidad)
+        except ValueError:
+            messagebox.showwarning("Validación", "La cantidad debe ser un número entero.")
+            return None
+
+        try:
+            precio = float(precio)
+        except ValueError:
+            messagebox.showwarning("Validación", "El precio debe ser un número.")
+            return None
+
+        return nombre, cantidad, precio
