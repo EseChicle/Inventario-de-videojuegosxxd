@@ -37,3 +37,52 @@ class Inventario(tk.TK):
         self._crear_widgets()
         self.cargar_datos()
         
+#interfaz visual#
+    def _crear_widgets(self):
+        form = ttk.LabelFrame(self, text="Datos del juego")
+        form.pack(fill="x", padx=10, pady=10)
+
+        ttk.Label(form, text="Título:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        self.entry_nombre = ttk.Entry(form, width=40)
+        self.entry_nombre.grid(row=0, column=1, padx=5, pady=5, columnspan=3, sticky="w")
+
+        ttk.Label(form, text="Cantidad:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        self.entry_cantidad = ttk.Entry(form, width=30)
+        self.entry_cantidad.grid(row=1, column=1, padx=5, pady=5)
+
+        ttk.Label(form, text="Precio:").grid(row=1, column=2, padx=5, pady=5, sticky="e")
+        self.entry_precio = ttk.Entry(form, width=20)
+        self.entry_precio.grid(row=1, column=3, padx=5, pady=5)
+
+        botones = ttk.Frame(form)
+        botones.grid(row=2, column=0, columnspan=4, pady=10)
+
+        ttk.Button(botones, text="Agregar", command=self.agregar_producto).pack(side="left", padx=5)
+        ttk.Button(botones, text="Actualizar", command=self.actualizar_producto).pack(side="left", padx=5)
+        ttk.Button(botones, text="Eliminar", command=self.eliminar_producto).pack(side="left", padx=5)
+        ttk.Button(botones, text="Limpiar", command=self.limpiar_formulario).pack(side="left", padx=5)
+
+        busqueda_frame = ttk.Frame(self)
+        busqueda_frame.pack(fill="x", padx=10)
+        ttk.Label(busqueda_frame, text="Buscar:").pack(side="left")
+        self.entry_busqueda = ttk.Entry(busqueda_frame, width=40)
+        self.entry_busqueda.pack(side="left", padx=5)
+        self.entry_busqueda.bind("<KeyRelease>", lambda e: self._cargar_datos(self.entry_busqueda.get()))
+
+        columnas = ("id", "nombre", "cantidad", "precio", "total")
+        self.tabla = ttk.Treeview(self, columns=columnas, show="headings")
+        titulos = {
+            "id": "ID", "nombre": "Título", "cantidad": "Cantidad", "precio": "Precio", "total": "Total",
+        }
+        anchos = {"id": 40, "nombre": 320, "cantidad": 90, "precio": 100, "total": 110}
+        for col in columnas:
+            self.tabla.heading(col, text=titulos[col])
+            self.tabla.column(col, width=anchos[col], anchor="center")
+
+        self.tabla.pack(fill="both", expand=True, padx=10, pady=10)
+        self.tabla.bind("<<TreeviewSelect>>", self._seleccionar_fila)
+
+        self.label_total = ttk.Label(self, text="Valor total del inventario: $0.00", anchor="w")
+        self.label_total.pack(fill="x", padx=10, pady=(0, 10))
+
+
