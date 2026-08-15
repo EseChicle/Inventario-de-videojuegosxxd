@@ -1,4 +1,4 @@
-import sqlite3 
+import sqlite3
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -8,12 +8,11 @@ def conectar_db():
     conn = sqlite3.connect(DB_NAME)
     conn.execute(
         """
-        CREATE TABLE IF  NOT EXISTS videojuegos(
+        CREATE TABLE IF NOT EXISTS videojuegos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL
-        categoria TEXT,
+        nombre TEXT NOT NULL,
         cantidad INTEGER NOT NULL DEFAULT 0,
-        precio REAL NOT NULL DEFAULT0
+        precio REAL NOT NULL DEFAULT 0
         )
         """
     )
@@ -35,8 +34,8 @@ class Inventario(tk.Tk):
         self.id_seleccionado = None
 
         self._crear_widgets()
-        self.cargar_datos()
-        
+        self._cargar_datos()
+
 #interfaz visual#
     def _crear_widgets(self):
         form = ttk.LabelFrame(self, text="Datos del juego")
@@ -108,7 +107,20 @@ class Inventario(tk.Tk):
             return None
 
         return nombre, cantidad, precio
-    
+
+        #agregar producto
+    def agregar_producto(self):
+        datos = self._validar_formulario()
+        if not datos:
+            return
+        nombre, cantidad, precio = datos
+        self.conn.execute(
+            "INSERT INTO videojuegos (nombre, cantidad, precio) VALUES (?, ?, ?)",
+            (nombre, cantidad, precio),
+        )
+        self.conn.commit()
+        self._cargar_datos()
+
      #actualizar producto
     def actualizar_producto(self):
         if self.id_seleccionado is None:
@@ -119,7 +131,7 @@ class Inventario(tk.Tk):
             return
         nombre, cantidad, precio = datos
         self.conn.execute(
-            "UPDATE productos SET nombre=?, cantidad=?, precio=? WHERE id=?",
+            "UPDATE videojuegos SET nombre=?, cantidad=?, precio=? WHERE id=?",
             (nombre, cantidad, precio, self.id_seleccionado),
         )
         self.conn.commit()
@@ -132,7 +144,7 @@ class Inventario(tk.Tk):
             messagebox.showwarning("Selección", "Selecciona un juego de la tabla para eliminar.")
             return
         if messagebox.askyesno("Confirmar", "¿Eliminar el juego seleccionado?"):
-            self.conn.execute("DELETE FROM productos WHERE id=?", (self.id_seleccionado,))
+            self.conn.execute("DELETE FROM videojuegos WHERE id=?", (self.id_seleccionado,))
             self.conn.commit()
             self._cargar_datos()
 
@@ -144,10 +156,55 @@ class Inventario(tk.Tk):
         self.entry_precio.delete(0, tk.END)
         self.id_seleccionado = None
         self.tabla.selection_remove(self.tabla.selection())
-        
 
+        #seleccionar fila de la tabla
 
-        
+    def _seleccionar_fila(self, event):
+        seleccion = self.tabla.selection()
+        if not seleccion:
+            return
+        valores = self.tabla.item(seleccion[0], "values")
+        self.id_seleccionado = int(valores[0])
+        self.entry_nombre.delete(0, tk.END)
+        self.entry_nombre.insert(0, valores[1])
+        self.entry_cantidad.delete(0, tk.END)
+        self.entry_cantidad.insert(0, valores[2])
+        self.entry_precio.delete(0, tk.END)
+        self.entry_precio.insert(0, valores[3])
 
+        #cargar datos de la tablas
 
-    
+    def _cargar_datos(self, filtro=""):
+        for fila in self.tabla.get_children():
+            self.tabla.delete(fila)
+
+        if filtro:
+            cursor = self.conn.execute(
+                "SELECT id, nombre, cantidad, precio FROM videojuegos WHERE nombre LIKE ? ORDER BY nombre",
+                (f"%{filtro}%",),
+            )
+        else:
+            cursor = self.conn.execute("SELECT id, nombre, cantidad, precio FROM videojuegos ORDER BY nombre")
+
+        total_general = 0
+        for id_, nombre, cantidad, precio in cursor.fetchall():
+            total_fila = cantidad * precio
+            total_general += total_fila
+            self.tabla.insert(
+                "", tk.END,
+                values=(id_, nombre, cantidad, f"{precio:.2f}", f"{total_fila:.2f}"),
+            )
+
+        self.label_total.config(text=f"Valor total del inventario: ${total_general:.2f}")
+
+        #cierre de app
+
+    def destroy(self):
+        self.conn.close()
+        super().destroy()
+
+        #entrada
+
+if __name__ == "__main__":
+     app = Inventario()
+     app.mainloop()
