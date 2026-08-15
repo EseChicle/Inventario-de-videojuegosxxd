@@ -20,7 +20,7 @@ def conectar_db():
     return conn
 #ventana principal y carga de productos#
 
-class Inventario(tk.TK):
+class Inventario(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Videojuegos Nevos")
@@ -108,3 +108,46 @@ class Inventario(tk.TK):
             return None
 
         return nombre, cantidad, precio
+    
+     #actualizar producto
+    def actualizar_producto(self):
+        if self.id_seleccionado is None:
+            messagebox.showwarning("Selección", "Selecciona un juego de la tabla para actualizar.")
+            return
+        datos = self._validar_formulario()
+        if not datos:
+            return
+        nombre, cantidad, precio = datos
+        self.conn.execute(
+            "UPDATE productos SET nombre=?, cantidad=?, precio=? WHERE id=?",
+            (nombre, cantidad, precio, self.id_seleccionado),
+        )
+        self.conn.commit()
+        self._cargar_datos()
+
+        #eliminar productos
+
+    def eliminar_producto(self):
+        if self.id_seleccionado is None:
+            messagebox.showwarning("Selección", "Selecciona un juego de la tabla para eliminar.")
+            return
+        if messagebox.askyesno("Confirmar", "¿Eliminar el juego seleccionado?"):
+            self.conn.execute("DELETE FROM productos WHERE id=?", (self.id_seleccionado,))
+            self.conn.commit()
+            self._cargar_datos()
+
+            #limpiar formulario
+
+    def limpiar_formulario(self):
+        self.entry_nombre.delete(0, tk.END)
+        self.entry_cantidad.delete(0, tk.END)
+        self.entry_precio.delete(0, tk.END)
+        self.id_seleccionado = None
+        self.tabla.selection_remove(self.tabla.selection())
+        
+
+
+        
+
+
+    
